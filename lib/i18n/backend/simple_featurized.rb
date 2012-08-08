@@ -31,7 +31,7 @@ module I18n
         end
       end
 
-      attr_writer :active_features_source, :supported_languages_source
+      attr_writer :features_source, :supported_languages_source
 
       def features
         featurized_keys.map { |key| key.to_s[/@(\w)+/] }.map { |key|
@@ -73,11 +73,11 @@ module I18n
       end
 
       def active_features
-        active_features_source.call
+        features_source.call
       end
 
-      def active_features_source
-        @active_features_source || ->{ [] }
+      def features_source
+        @features_source || ->{ [] }
       end
 
       def featurized_keys

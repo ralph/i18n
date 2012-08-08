@@ -19,7 +19,7 @@ class FeaturizedKeyTest < Test::Unit::TestCase
       @fk_class = I18n::Backend::SimpleFeaturized::FeaturizedKey
       I18n.load_path = [locales_dir + '/en_featurized.yml']
       backend = I18n::Backend::SimpleFeaturized.new
-      backend.active_features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
+      backend.features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
       backend.supported_languages_source = ->{ [:de, :en] }
       I18n.backend = backend
     end
@@ -47,11 +47,11 @@ class I18nBackendSimpleFeaturizedTest < Test::Unit::TestCase
     I18n.load_path = [locales_dir + '/en_featurized.yml']
 
     @backend = I18n.backend
-    @backend.active_features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
+    @backend.features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
     @backend.supported_languages_source = ->{ [:de, :en] }
   end
 
-  test "#active_features calls the active_features_source" do
+  test "#active_features calls the features_source" do
     expected = [:sexy_bookings, :my_feature, :deutsch]
     assert_equal expected, @backend.active_features
   end
