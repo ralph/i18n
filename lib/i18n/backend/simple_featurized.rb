@@ -33,6 +33,10 @@ module I18n
         def inspect
           "\"#{name}\""
         end
+        
+        def feature
+          Feature.new name[/\@(\w+)/, 1].to_sym, backend
+        end
       end
 
 

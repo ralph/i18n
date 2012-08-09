@@ -38,6 +38,11 @@ class FeaturizedKeyTest < Test::Unit::TestCase
       fk = @fk_class.new "Etwas nur auf Deutsch @deutsch", I18n.backend
       assert_equal [:en], fk.missing_languages
     end
+
+    test "#feature returns matching feature" do
+      fk = @fk_class.new "Etwas nur auf Deutsch @deutsch", I18n.backend
+      assert_equal :deutsch, fk.feature.to_sym
+    end
   end
 end
 
