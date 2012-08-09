@@ -33,7 +33,7 @@ module I18n
         def inspect
           "\"#{name}\""
         end
-        
+
         def feature
           Feature.new name[/\@(\w+)/, 1].to_sym, backend
         end
@@ -75,6 +75,10 @@ module I18n
         def missing_keys_for(language)
           language.missing_keys_for self
         end
+
+        def state
+          backend.feature_state_source.call(name)
+        end
       end
 
 
@@ -105,7 +109,7 @@ module I18n
         def to_sym
           name.to_sym
         end
-        
+
         def inspect
           "\"#{name}\""
         end
@@ -114,7 +118,7 @@ module I18n
 
 
 
-      attr_writer :features_source, :supported_languages_source
+      attr_writer :features_source, :feature_state_source, :supported_languages_source
 
       def features
         featurized_keys.map { |key| key.to_s[/@(\w)+/] }.map { |key|
@@ -161,6 +165,10 @@ module I18n
 
       def features_source
         @features_source || ->{ [] }
+      end
+
+      def feature_state_source
+        @state_source || ->(name){ :live }
       end
 
       def featurized_keys
