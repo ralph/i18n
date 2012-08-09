@@ -71,6 +71,10 @@ module I18n
         def languages
           backend.supported_languages
         end
+
+        def missing_keys_for(language)
+          language.missing_keys_for self
+        end
       end
 
 
@@ -87,7 +91,6 @@ module I18n
 
         def missing_keys_for(feature)
           regexp = Regexp.new("\@#{feature}")
-          puts keys_with_translations_missing
           keys_with_translations_missing.select { |k| k =~ regexp }
         end
 

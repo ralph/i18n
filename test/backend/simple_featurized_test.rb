@@ -91,6 +91,15 @@ class FeatureTest < Test::Unit::TestCase
       expected = [language_class.new(:de, I18n.backend)]
       assert_equal expected, feature.languages_with_missing_keys
     end
+
+    test "#missing_keys_for(language)" do
+      feature = @klazz.new :sexy_bookings, I18n.backend
+      language_class = I18n::Backend::SimpleFeaturized::Language
+      language = language_class.new(:de, I18n.backend)
+
+      expected = ["Do something @sexy_bookings"]
+      assert_equal expected, feature.missing_keys_for(language).map(&:to_s)
+    end
   end
 end
 
