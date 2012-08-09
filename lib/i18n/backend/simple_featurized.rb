@@ -4,11 +4,11 @@ module I18n
   module Backend
     class SimpleFeaturized < I18n::Backend::Simple
       FeaturizedKey = Struct.new(:name, :backend) do
+        include Comparable
 
         def <=>(other)
           name <=> other.name
         end
-        include Comparable
 
         def to_s
           name
@@ -29,14 +29,46 @@ module I18n
         def =~(regexp)
           name =~ regexp
         end
+
+        def inspect
+          "\"#{name}\""
+        end
       end
+
+
+      Feature = Struct.new(:name, :backend) do
+        include Comparable
+
+        def <=>(other)
+          name <=> other.name
+        end
+
+        def inspect
+          "\"#{name}\""
+        end
+
+        def keys
+          regexp = Regexp.new("\@#{name}")
+          backend.featurized_keys.select { |k| k =~ regexp }
+        end
+
+        def to_s
+          name.to_s
+        end
+
+        def to_sym
+          name.to_sym
+        end
+      end
+
+
 
       attr_writer :features_source, :supported_languages_source
 
       def features
         featurized_keys.map { |key| key.to_s[/@(\w)+/] }.map { |key|
           key[1..-1].to_sym
-        }.uniq.sort
+        }.uniq.sort.map { |sym| Feature.new(sym, self) }
       end
 
       def keys_with_translations_missing
@@ -91,6 +123,16 @@ module I18n
           }.map { |key| FeaturizedKey.new(key, self) }
         end
         list.to_a.sort
+      end
+
+      def missing_keys_by_language
+        supported_languages.inject({}) do |memo, language|
+          memo[language] = featurized_keys.map { |key|
+            translation = lookup(language, key)
+            translation.nil? ? key : nil
+          }.compact
+          memo
+        end
       end
     end
   end
