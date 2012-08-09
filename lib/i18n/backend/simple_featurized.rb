@@ -63,7 +63,51 @@ module I18n
         def to_sym
           name.to_sym
         end
+
+        def languages_with_missing_keys
+          backend.unready_languages_for(self)
+        end
+
+        def languages
+          backend.supported_languages
+        end
       end
+
+
+      Language = Struct.new(:name, :backend) do
+        include Comparable
+
+        def <=>(other)
+          name <=> other.name
+        end
+
+        def keys_with_translations_missing
+          backend.missing_keys_by_language[self] || []
+        end
+
+        def missing_keys_for(feature)
+          regexp = Regexp.new("\@#{feature}")
+          puts keys_with_translations_missing
+          keys_with_translations_missing.select { |k| k =~ regexp }
+        end
+
+        def features_with_missing_keys
+          keys_with_translations_missing.map(&:feature).uniq.sort
+        end
+
+        def to_s
+          name.to_s
+        end
+
+        def to_sym
+          name.to_sym
+        end
+        
+        def inspect
+          "\"#{name}\""
+        end
+      end
+
 
 
 
@@ -101,7 +145,7 @@ module I18n
       end
 
       def supported_languages
-        supported_languages_source.call
+        supported_languages_source.call.map { |l| Language.new l, self }
       end
 
       def supported_languages_source
@@ -122,7 +166,7 @@ module I18n
 
         list = Set.new
         supported_languages.each do |language|
-          list += @translations[language].keys.map(&:to_s).select { |key|
+          list += @translations[language.to_sym].keys.map(&:to_s).select { |key|
             key =~ regexp
           }.map { |key| FeaturizedKey.new(key, self) }
         end
