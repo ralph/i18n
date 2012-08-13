@@ -92,6 +92,12 @@ class FeatureTest < Test::Unit::TestCase
       assert_equal expected, feature.languages_with_missing_keys
     end
 
+    test "#languages_with_missing_keys?" do
+      feature = @klazz.new :sexy_bookings, I18n.backend
+      language_class = I18n::Backend::SimpleFeaturized::Language
+      assert feature.languages_with_missing_keys?
+    end
+
     test "#missing_keys_for(language)" do
       feature = @klazz.new :sexy_bookings, I18n.backend
       language_class = I18n::Backend::SimpleFeaturized::Language

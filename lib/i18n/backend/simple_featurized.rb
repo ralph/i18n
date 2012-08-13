@@ -68,6 +68,10 @@ module I18n
           backend.unready_languages_for(self)
         end
 
+        def languages_with_missing_keys?
+          languages_with_missing_keys.any?
+        end
+
         def languages
           backend.supported_languages
         end
@@ -121,9 +125,7 @@ module I18n
       attr_writer :features_source, :feature_state_source, :supported_languages_source
 
       def features
-        featurized_keys.map { |key| key.to_s[/@(\w)+/] }.map { |key|
-          key[1..-1].to_sym
-        }.uniq.sort.map { |sym| Feature.new(sym, self) }
+        active_features.uniq.sort.map { |sym| Feature.new(sym, self) }
       end
 
       def keys_with_translations_missing
