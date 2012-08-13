@@ -170,7 +170,7 @@ module I18n
       end
 
       def feature_state_source
-        @state_source || ->(name){ :live }
+        @feature_state_source || ->(name){ :live }
       end
 
       def featurized_keys
