@@ -17,7 +17,7 @@ class FeaturizedKeyTest < Test::Unit::TestCase
   class WithBackendTest < Test::Unit::TestCase
     def setup
       @fk_class = I18n::Backend::SimpleFeaturized::FeaturizedKey
-      I18n.load_path = [locales_dir + '/en_featurized.yml']
+      I18n.load_path = [locales_dir + '/featurized.yml']
       backend = I18n::Backend::SimpleFeaturized.new
       backend.features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
       backend.supported_languages_source = ->{ [:de, :en] }
@@ -25,22 +25,22 @@ class FeaturizedKeyTest < Test::Unit::TestCase
     end
 
     test "#translations_complete? is false if not all translations present" do
-      fk = @fk_class.new "Etwas nur auf Deutsch @deutsch", I18n.backend
+      fk = @fk_class.new "deutsch.something_german", I18n.backend
       assert !fk.translations_complete?
     end
 
     test "#translations_complete? is true if all translations present" do
-      fk = @fk_class.new "Add another place @sexy_bookings", I18n.backend
+      fk = @fk_class.new "sexy_bookings.add_another_place", I18n.backend
       assert fk.translations_complete?
     end
 
     test "#missing_languages returns languages that are missing translations" do
-      fk = @fk_class.new "Etwas nur auf Deutsch @deutsch", I18n.backend
+      fk = @fk_class.new "deutsch.something_german", I18n.backend
       assert_equal [:en], fk.missing_languages.map(&:to_sym)
     end
 
     test "#feature returns matching feature" do
-      fk = @fk_class.new "Etwas nur auf Deutsch @deutsch", I18n.backend
+      fk = @fk_class.new "deutsch.something_german", I18n.backend
       assert_equal :deutsch, fk.feature.to_sym
     end
   end
@@ -64,7 +64,7 @@ class FeatureTest < Test::Unit::TestCase
   class WithBackendTest < Test::Unit::TestCase
     def setup
       @klazz = I18n::Backend::SimpleFeaturized::Feature
-      I18n.load_path = [locales_dir + '/en_featurized.yml']
+      I18n.load_path = [locales_dir + '/featurized.yml']
       backend = I18n::Backend::SimpleFeaturized.new
       backend.features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
       backend.supported_languages_source = ->{ [:de, :en] }
@@ -74,8 +74,8 @@ class FeatureTest < Test::Unit::TestCase
     test "#keys returns all translation keys belonging to that feature" do
       feature = @klazz.new :sexy_bookings, I18n.backend
       expected = [
-        "Add another place @sexy_bookings",
-        "Do something @sexy_bookings"
+        "sexy_bookings.add_another_place",
+        "sexy_bookings.do_something"
       ]
       assert_equal expected, feature.keys.map(&:to_s)
     end
@@ -103,7 +103,7 @@ class FeatureTest < Test::Unit::TestCase
       language_class = I18n::Backend::SimpleFeaturized::Language
       language = language_class.new(:de, I18n.backend)
 
-      expected = ["Do something @sexy_bookings"]
+      expected = ["sexy_bookings.do_something"]
       assert_equal expected, feature.missing_keys_for(language).map(&:to_s)
     end
   end
@@ -128,7 +128,7 @@ class LanguageTest < Test::Unit::TestCase
   class WithBackendTest < Test::Unit::TestCase
     def setup
       @klazz = I18n::Backend::SimpleFeaturized::Language
-      I18n.load_path = [locales_dir + '/en_featurized.yml']
+      I18n.load_path = [locales_dir + '/featurized.yml']
       backend = I18n::Backend::SimpleFeaturized.new
       backend.features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
       backend.supported_languages_source = ->{ [:de, :en] }
@@ -137,7 +137,7 @@ class LanguageTest < Test::Unit::TestCase
 
     test "#keys_with_translations_missing" do
       language = @klazz.new :de, I18n.backend
-      expected = ["Do something @sexy_bookings"]
+      expected = ["sexy_bookings.do_something"]
       assert_equal expected, language.keys_with_translations_missing.map(&:to_s)
     end
 
@@ -154,7 +154,7 @@ end
 class I18nBackendSimpleFeaturizedTest < Test::Unit::TestCase
   def setup
     I18n.backend = I18n::Backend::SimpleFeaturized.new
-    I18n.load_path = [locales_dir + '/en_featurized.yml']
+    I18n.load_path = [locales_dir + '/featurized.yml']
 
     @backend = I18n.backend
     @backend.features_source = ->{ [:sexy_bookings, :my_feature, :deutsch] }
@@ -176,22 +176,24 @@ class I18nBackendSimpleFeaturizedTest < Test::Unit::TestCase
 
   test "#featurized_keys returns list of featurized translation keys" do
     expected = [
-      "Add another place @sexy_bookings",
-      "Do something @sexy_bookings",
-      "Etwas nur auf Deutsch @deutsch",
-      "something plural with spaces @my_feature"
-    ]
+      "sexy_bookings.add_another_place",
+      "sexy_bookings.do_something",
+      "my_feature.something_plural.one",
+      "my_feature.something_plural.other",
+      "my_feature.something_plural.zero",
+      "deutsch.something_german"
+    ].sort
 
-    assert_equal expected, @backend.featurized_keys.map(&:to_s)
+    assert_equal expected, @backend.featurized_keys.map(&:to_s).sort
   end
 
   test "#keys_with_translations_missing returns list of keys that are missing translations" do
-    expected = ["Do something @sexy_bookings", "Etwas nur auf Deutsch @deutsch"]
+    expected = ["sexy_bookings.do_something", "deutsch.something_german"]
     assert_equal expected, @backend.keys_with_translations_missing.map(&:to_s)
   end
 
   test "#keys_missing_for(feature) returns a list of missing keys" do
-    expected = ["Do something @sexy_bookings"]
+    expected = ["sexy_bookings.do_something"]
     actual = @backend.keys_missing_for(:sexy_bookings).map(&:to_s)
 
     assert_equal expected, actual
@@ -221,9 +223,23 @@ class I18nBackendSimpleFeaturizedTest < Test::Unit::TestCase
     fk_class = I18n::Backend::SimpleFeaturized::FeaturizedKey
     language_class = I18n::Backend::SimpleFeaturized::Language
     expected = {
-      language_class.new(:de, @backend) => [fk_class.new("Do something @sexy_bookings", @backend)],
-      language_class.new(:en, @backend) => [fk_class.new("Etwas nur auf Deutsch @deutsch", @backend)]
+      language_class.new(:de, @backend) => [fk_class.new("sexy_bookings.do_something", @backend)],
+      language_class.new(:en, @backend) => [fk_class.new("deutsch.something_german", @backend)]
     }
     assert_equal expected, @backend.missing_keys_by_language
+  end
+
+  test ".flat_hash_keys returns an array with all hash keys" do
+    hash = {
+      a: 'a',
+      b: {
+        ba: 'ba',
+        bb: 'bb'
+      },
+      c: 'c'
+    }
+
+    expected = ['a', 'b.ba', 'b.bb', 'c']
+    assert_equal expected, I18n::Backend::SimpleFeaturized.flat_hash_keys(hash)
   end
 end

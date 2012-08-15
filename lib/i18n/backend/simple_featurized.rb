@@ -35,7 +35,8 @@ module I18n
         end
 
         def feature
-          Feature.new name[/\@(\w+)/, 1].to_sym, backend
+          regexp = /^(\w+).*/
+          Feature.new name[regexp, 1].to_sym, backend
         end
       end
 
@@ -52,7 +53,7 @@ module I18n
         end
 
         def keys
-          regexp = Regexp.new("\@#{name}")
+          regexp = Regexp.new("^#{name}\.")
           backend.featurized_keys.select { |k| k =~ regexp }
         end
 
@@ -98,7 +99,7 @@ module I18n
         end
 
         def missing_keys_for(feature)
-          regexp = Regexp.new("\@#{feature}")
+          regexp = Regexp.new("^#{feature}\.")
           keys_with_translations_missing.select { |k| k =~ regexp }
         end
 
@@ -139,7 +140,7 @@ module I18n
       end
 
       def keys_missing_for(feature)
-        regexp = Regexp.new("\@#{feature}")
+        regexp = Regexp.new("^#{feature}\.")
         keys_with_translations_missing.select { |k| k =~ regexp }
       end
 
@@ -175,15 +176,15 @@ module I18n
 
       def featurized_keys
         init_translations unless initialized?
-        regexp = Regexp.new(active_features.map {|f| "@#{f}"}.join('|'))
 
-        list = Set.new
-        supported_languages.each do |language|
-          list += @translations[language.to_sym].keys.map(&:to_s).select { |key|
-            key =~ regexp
-          }.map { |key| FeaturizedKey.new(key, self) }
+        all_keys_hash = supported_languages.inject({}) do |all_keys, language|
+          keys = @translations[language.to_sym].select {|k,_| active_features.include? k }
+          all_keys.deep_merge! keys unless keys.nil?
+          all_keys
         end
-        list.to_a.sort
+        self.class.flat_hash_keys(all_keys_hash).map do |key|
+          FeaturizedKey.new key, self
+        end
       end
 
       def missing_keys_by_language
@@ -193,6 +194,19 @@ module I18n
             translation.nil? ? key : nil
           }.compact
           memo
+        end
+      end
+
+      def self.flat_hash_keys(hash, prefix = nil, separator = I18n.default_separator)
+        hash.inject([]) do |list, key_value|
+          key, value = key_value
+          current_key = [prefix, key.to_s].compact.join(separator)
+          if value.is_a? Hash
+            list += flat_hash_keys(value, current_key, separator)
+          else
+            list << current_key
+          end
+          list
         end
       end
     end

@@ -1,0 +1,24 @@
+en:
+  sexy_bookings:
+    add_another_place: "Add another place"
+    do_something: "Do something"
+  my_feature:
+    something_plural:
+      one: "one thing"
+      other: "more things"
+      zero: ""
+  foo:
+    bar: baz
+
+de:
+  sexy_bookings:
+    add_another_place: "Anderen Platz hinzufügen"
+  my_feature:
+    something_plural:
+      one: "ein Ding"
+      other: "mehrere Dinge"
+      zero: ""
+  deutsch:
+    something_german: "Bier"
+  foo:
+    bar: baz
