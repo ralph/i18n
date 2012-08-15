@@ -35,8 +35,7 @@ module I18n
         end
 
         def feature
-          regexp = /^(\w+).*/
-          Feature.new name[regexp, 1].to_sym, backend
+          Feature.new name.split('.').first.to_sym, backend
         end
       end
 
@@ -53,8 +52,7 @@ module I18n
         end
 
         def keys
-          regexp = Regexp.new("^#{name}\.")
-          backend.featurized_keys.select { |k| k =~ regexp }
+          SimpleFeaturized.flat_hash_keys backend.featurized_hash[name.to_sym], name
         end
 
         def to_s
@@ -77,8 +75,8 @@ module I18n
           backend.supported_languages
         end
 
-        def missing_keys_for(language)
-          language.missing_keys_for self
+        def keys_missing_for(language)
+          language.keys_missing_for self
         end
 
         def state
@@ -98,7 +96,7 @@ module I18n
           backend.missing_keys_by_language[self] || []
         end
 
-        def missing_keys_for(feature)
+        def keys_missing_for(feature)
           regexp = Regexp.new("^#{feature}\.")
           keys_with_translations_missing.select { |k| k =~ regexp }
         end
@@ -144,6 +142,12 @@ module I18n
         keys_with_translations_missing.select { |k| k =~ regexp }
       end
 
+      def keys_for(feature)
+        init_translations unless initialized?
+
+        self.class.flat_hash_keys featurized_hash[feature.to_sym], feature.to_s
+      end
+
       def unready_languages_for?(feature)
         languages = unready_languages_for(feature)
         languages.any? ? true : false
@@ -175,15 +179,18 @@ module I18n
       end
 
       def featurized_keys
+        self.class.flat_hash_keys(featurized_hash).map do |key|
+          FeaturizedKey.new key, self
+        end
+      end
+
+      def featurized_hash
         init_translations unless initialized?
 
-        all_keys_hash = supported_languages.inject({}) do |all_keys, language|
+        supported_languages.inject({}) do |all_keys, language|
           keys = @translations[language.to_sym].select {|k,_| active_features.include? k }
           all_keys.deep_merge! keys unless keys.nil?
           all_keys
-        end
-        self.class.flat_hash_keys(all_keys_hash).map do |key|
-          FeaturizedKey.new key, self
         end
       end
 

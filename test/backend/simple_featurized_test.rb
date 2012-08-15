@@ -98,13 +98,13 @@ class FeatureTest < Test::Unit::TestCase
       assert feature.languages_with_missing_keys?
     end
 
-    test "#missing_keys_for(language)" do
+    test "#keys_missing_for(language)" do
       feature = @klazz.new :sexy_bookings, I18n.backend
       language_class = I18n::Backend::SimpleFeaturized::Language
       language = language_class.new(:de, I18n.backend)
 
       expected = ["sexy_bookings.do_something"]
-      assert_equal expected, feature.missing_keys_for(language).map(&:to_s)
+      assert_equal expected, feature.keys_missing_for(language).map(&:to_s)
     end
   end
 end
@@ -205,6 +205,11 @@ class I18nBackendSimpleFeaturizedTest < Test::Unit::TestCase
 
   test "#keys_missing_for?(feature) is false if all translations present" do
     assert !@backend.keys_missing_for?(:my_feature)
+  end
+
+  test "keys_for(feature) returns all keys belonging to feature" do
+    expected = ["sexy_bookings.add_another_place", "sexy_bookings.do_something"]
+    assert_equal expected, @backend.keys_for(:sexy_bookings)
   end
 
   test "#unready_languages_for(feature) returns languages that are not fully translated" do
